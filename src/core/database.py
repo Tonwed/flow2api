@@ -495,6 +495,8 @@ class Database:
                     ("personal_project_pool_size", "INTEGER DEFAULT 4"),
                     ("personal_max_resident_tabs", "INTEGER DEFAULT 5"),
                     ("personal_idle_tab_ttl_seconds", "INTEGER DEFAULT 600"),
+                    ("extension_worker_url", "TEXT DEFAULT 'http://127.0.0.1:5231'"),
+                    ("extension_worker_timeout", "INTEGER DEFAULT 15"),
                 ]
 
                 for col_name, col_type in captcha_columns_to_add:
@@ -702,6 +704,8 @@ class Database:
                     remote_browser_base_url TEXT DEFAULT '',
                     remote_browser_api_key TEXT DEFAULT '',
                     remote_browser_timeout INTEGER DEFAULT 60,
+                    extension_worker_url TEXT DEFAULT 'http://127.0.0.1:5231',
+                    extension_worker_timeout INTEGER DEFAULT 15,
                     website_key TEXT DEFAULT '6LdsFiUsAAAAAIjVDZcuLhaHiDn5nnHVXVRQGeMV',
                     page_action TEXT DEFAULT 'IMAGE_GENERATION',
 
@@ -1557,6 +1561,8 @@ class Database:
             config.set_remote_browser_base_url(captcha_config.remote_browser_base_url)
             config.set_remote_browser_api_key(captcha_config.remote_browser_api_key)
             config.set_remote_browser_timeout(captcha_config.remote_browser_timeout)
+            config.set_extension_worker_url(captcha_config.extension_worker_url)
+            config.set_extension_worker_timeout(captcha_config.extension_worker_timeout)
             config.set_personal_project_pool_size(captcha_config.personal_project_pool_size)
             config.set_personal_max_resident_tabs(captcha_config.personal_max_resident_tabs)
             config.set_personal_idle_tab_ttl_seconds(captcha_config.personal_idle_tab_ttl_seconds)
@@ -1689,6 +1695,8 @@ class Database:
         remote_browser_base_url: str = None,
         remote_browser_api_key: str = None,
         remote_browser_timeout: int = None,
+        extension_worker_url: str = None,
+        extension_worker_timeout: int = None,
         browser_proxy_enabled: bool = None,
         browser_proxy_url: str = None,
         browser_count: int = None,
@@ -1716,6 +1724,8 @@ class Database:
                 new_remote_base_url = remote_browser_base_url if remote_browser_base_url is not None else current.get("remote_browser_base_url", "")
                 new_remote_api_key = remote_browser_api_key if remote_browser_api_key is not None else current.get("remote_browser_api_key", "")
                 new_remote_timeout = remote_browser_timeout if remote_browser_timeout is not None else current.get("remote_browser_timeout", 60)
+                new_ext_url = extension_worker_url if extension_worker_url is not None else current.get("extension_worker_url", "http://127.0.0.1:5231")
+                new_ext_timeout = extension_worker_timeout if extension_worker_timeout is not None else current.get("extension_worker_timeout", 15)
                 new_proxy_enabled = browser_proxy_enabled if browser_proxy_enabled is not None else current.get("browser_proxy_enabled", False)
                 new_proxy_url = browser_proxy_url if browser_proxy_url is not None else current.get("browser_proxy_url")
                 new_browser_count = browser_count if browser_count is not None else current.get("browser_count", 1)
@@ -1723,6 +1733,7 @@ class Database:
                 new_personal_max_tabs = personal_max_resident_tabs if personal_max_resident_tabs is not None else current.get("personal_max_resident_tabs", 5)
                 new_personal_idle_ttl = personal_idle_tab_ttl_seconds if personal_idle_tab_ttl_seconds is not None else current.get("personal_idle_tab_ttl_seconds", 600)
                 new_remote_timeout = max(5, int(new_remote_timeout)) if new_remote_timeout is not None else 60
+                new_ext_timeout = max(5, int(new_ext_timeout)) if new_ext_timeout is not None else 15
                 new_personal_project_pool_size = max(1, min(50, int(new_personal_project_pool_size)))
                 new_personal_max_tabs = max(1, min(50, int(new_personal_max_tabs)))  # 限制1-50
                 new_personal_idle_ttl = max(60, int(new_personal_idle_ttl))  # 最少60秒
@@ -1734,6 +1745,7 @@ class Database:
                         ezcaptcha_api_key = ?, ezcaptcha_base_url = ?,
                         capsolver_api_key = ?, capsolver_base_url = ?,
                         remote_browser_base_url = ?, remote_browser_api_key = ?, remote_browser_timeout = ?,
+                        extension_worker_url = ?, extension_worker_timeout = ?,
                         browser_proxy_enabled = ?, browser_proxy_url = ?, browser_count = ?,
                         personal_project_pool_size = ?,
                         personal_max_resident_tabs = ?, personal_idle_tab_ttl_seconds = ?,
@@ -1742,6 +1754,7 @@ class Database:
                 """, (new_method, new_yes_key, new_yes_url, new_cap_key, new_cap_url,
                       new_ez_key, new_ez_url, new_cs_key, new_cs_url,
                       (new_remote_base_url or "").strip(), (new_remote_api_key or "").strip(), new_remote_timeout,
+                      (new_ext_url or "http://127.0.0.1:5231").strip(), new_ext_timeout,
                       new_proxy_enabled, new_proxy_url, new_browser_count, new_personal_project_pool_size,
                       new_personal_max_tabs, new_personal_idle_ttl))
             else:
@@ -1757,6 +1770,8 @@ class Database:
                 new_remote_base_url = remote_browser_base_url if remote_browser_base_url is not None else ""
                 new_remote_api_key = remote_browser_api_key if remote_browser_api_key is not None else ""
                 new_remote_timeout = remote_browser_timeout if remote_browser_timeout is not None else 60
+                new_ext_url = extension_worker_url if extension_worker_url is not None else "http://127.0.0.1:5231"
+                new_ext_timeout = extension_worker_timeout if extension_worker_timeout is not None else 15
                 new_proxy_enabled = browser_proxy_enabled if browser_proxy_enabled is not None else False
                 new_proxy_url = browser_proxy_url
                 new_browser_count = browser_count if browser_count is not None else 1
@@ -1764,6 +1779,7 @@ class Database:
                 new_personal_max_tabs = personal_max_resident_tabs if personal_max_resident_tabs is not None else 5
                 new_personal_idle_ttl = personal_idle_tab_ttl_seconds if personal_idle_tab_ttl_seconds is not None else 600
                 new_remote_timeout = max(5, int(new_remote_timeout))
+                new_ext_timeout = max(5, int(new_ext_timeout))
                 new_personal_project_pool_size = max(1, min(50, int(new_personal_project_pool_size)))
                 new_personal_max_tabs = max(1, min(50, int(new_personal_max_tabs)))
                 new_personal_idle_ttl = max(60, int(new_personal_idle_ttl))
@@ -1773,13 +1789,15 @@ class Database:
                         capmonster_api_key, capmonster_base_url, ezcaptcha_api_key, ezcaptcha_base_url,
                         capsolver_api_key, capsolver_base_url,
                         remote_browser_base_url, remote_browser_api_key, remote_browser_timeout,
+                        extension_worker_url, extension_worker_timeout,
                         browser_proxy_enabled, browser_proxy_url, browser_count,
                         personal_project_pool_size,
                         personal_max_resident_tabs, personal_idle_tab_ttl_seconds)
-                    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (new_method, new_yes_key, new_yes_url, new_cap_key, new_cap_url,
                       new_ez_key, new_ez_url, new_cs_key, new_cs_url,
                       (new_remote_base_url or "").strip(), (new_remote_api_key or "").strip(), new_remote_timeout,
+                      (new_ext_url or "http://127.0.0.1:5231").strip(), new_ext_timeout,
                       new_proxy_enabled, new_proxy_url, new_browser_count, new_personal_project_pool_size,
                       new_personal_max_tabs, new_personal_idle_ttl))
 

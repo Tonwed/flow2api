@@ -1,7 +1,7 @@
 """Admin API routes"""
 import asyncio
 import json
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, WebSocket
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -1529,6 +1529,8 @@ async def update_captcha_config(
     remote_browser_base_url = request.get("remote_browser_base_url")
     remote_browser_api_key = request.get("remote_browser_api_key")
     remote_browser_timeout = request.get("remote_browser_timeout", 60)
+    extension_worker_url = request.get("extension_worker_url")
+    extension_worker_timeout = request.get("extension_worker_timeout")
     browser_proxy_enabled = request.get("browser_proxy_enabled", False)
     browser_proxy_url = request.get("browser_proxy_url", "")
     browser_count = request.get("browser_count", 1)
@@ -1553,6 +1555,12 @@ async def update_captcha_config(
     except Exception:
         return {"success": False, "message": "远程打码超时时间必须是整数秒"}
 
+    if extension_worker_timeout is not None:
+        try:
+            extension_worker_timeout = max(5, int(extension_worker_timeout))
+        except Exception:
+            extension_worker_timeout = 15
+
     if captcha_method == "remote_browser":
         if not (remote_browser_base_url or "").strip():
             return {"success": False, "message": "remote_browser 模式需要配置远程打码服务地址"}
@@ -1572,6 +1580,8 @@ async def update_captcha_config(
         remote_browser_base_url=remote_browser_base_url,
         remote_browser_api_key=remote_browser_api_key,
         remote_browser_timeout=remote_browser_timeout,
+        extension_worker_url=extension_worker_url,
+        extension_worker_timeout=extension_worker_timeout,
         browser_proxy_enabled=browser_proxy_enabled,
         browser_proxy_url=browser_proxy_url if browser_proxy_enabled else None,
         browser_count=max(1, int(browser_count)) if browser_count else 1,
@@ -1621,6 +1631,8 @@ async def get_captcha_config(token: str = Depends(verify_admin_token)):
         "remote_browser_base_url": captcha_config.remote_browser_base_url,
         "remote_browser_api_key": captcha_config.remote_browser_api_key,
         "remote_browser_timeout": captcha_config.remote_browser_timeout,
+        "extension_worker_url": captcha_config.extension_worker_url,
+        "extension_worker_timeout": captcha_config.extension_worker_timeout,
         "browser_proxy_enabled": captcha_config.browser_proxy_enabled,
         "browser_proxy_url": captcha_config.browser_proxy_url or "",
         "browser_count": captcha_config.browser_count,
@@ -1795,3 +1807,21 @@ async def plugin_update_token(request: dict, authorization: Optional[str] = Head
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to add token: {str(e)}")
+
+# ========== Captcha Extension Bridge (WebSocket) ==========
+
+@router.websocket("/ws/captcha")
+async def captcha_bridge_ws(ws: WebSocket):
+    """WebSocket endpoint for Chrome extension captcha bridge.
+    Replaces the external captcha_worker.js — extension connects here directly."""
+    from ..services.captcha_bridge import CaptchaBridge
+    bridge = CaptchaBridge.get_instance()
+    await bridge.handle_websocket(ws)
+
+
+@router.get("/api/captcha/bridge/status")
+async def captcha_bridge_status():
+    """Get Chrome extension bridge connection status (no auth required)."""
+    from ..services.captcha_bridge import CaptchaBridge
+    bridge = CaptchaBridge.get_instance()
+    return bridge.status_dict()

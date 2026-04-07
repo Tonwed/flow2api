@@ -176,7 +176,7 @@ class CaptchaConfig(BaseModel):
     """Captcha configuration"""
 
     id: int = 1
-    captcha_method: str = "browser"  # yescaptcha/capmonster/ezcaptcha/capsolver/browser/personal/remote_browser
+    captcha_method: str = "browser"  # yescaptcha/capmonster/ezcaptcha/capsolver/browser/personal/remote_browser/extension
     yescaptcha_api_key: str = ""
     yescaptcha_base_url: str = "https://api.yescaptcha.com"
     capmonster_api_key: str = ""
@@ -188,6 +188,8 @@ class CaptchaConfig(BaseModel):
     remote_browser_base_url: str = ""
     remote_browser_api_key: str = ""
     remote_browser_timeout: int = 60
+    extension_worker_url: str = "http://127.0.0.1:5231"
+    extension_worker_timeout: int = 15
     website_key: str = "6LdsFiUsAAAAAIjVDZcuLhaHiDn5nnHVXVRQGeMV"
     page_action: str = "IMAGE_GENERATION"
     browser_proxy_enabled: bool = False  # 浏览器打码是否启用代理

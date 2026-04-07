@@ -2395,6 +2395,33 @@ class FlowClient:
                 debug_logger.log_error(f"[reCAPTCHA RemoteBrowser] 错误: {str(e)}")
                 self._set_request_fingerprint(None)
                 return None, None
+        # 浏览器插件打码（内置 WebSocket 桥接）
+        elif captcha_method == "extension":
+            try:
+                from .captcha_bridge import CaptchaBridge
+                bridge = CaptchaBridge.get_instance()
+                if not bridge.is_connected:
+                    debug_logger.log_error("[reCAPTCHA Extension] Chrome 插件未连接")
+                    self._set_request_fingerprint(None)
+                    return None, None
+                timeout_sec = config.extension_worker_timeout
+                debug_logger.log_info(f"[reCAPTCHA Extension] 请求 token via bridge, action={action}")
+                token, ua = await bridge.solve(action=action, timeout=timeout_sec)
+                if token:
+                    debug_logger.log_info(f"[reCAPTCHA Extension] ✅ Token acquired: {token[:50]}...")
+                    if ua:
+                        self._set_request_fingerprint({"userAgent": ua})
+                    else:
+                        self._set_request_fingerprint(None)
+                    return token, None
+                else:
+                    debug_logger.log_error("[reCAPTCHA Extension] ❌ No token returned")
+                    self._set_request_fingerprint(None)
+                    return None, None
+            except Exception as e:
+                debug_logger.log_error(f"[reCAPTCHA Extension] 错误: {str(e)}")
+                self._set_request_fingerprint(None)
+                return None, None
         # API打码服务
         elif captcha_method in ["yescaptcha", "capmonster", "ezcaptcha", "capsolver"]:
             self._set_request_fingerprint(None)

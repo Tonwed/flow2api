@@ -563,6 +563,37 @@ class Config:
             normalized = 60
         self._config["captcha"]["remote_browser_timeout"] = normalized
 
+    # Extension Worker (Chrome Extension captcha bridge)
+    @property
+    def extension_worker_url(self) -> str:
+        """Get extension captcha worker URL"""
+        return self._config.get("captcha", {}).get("extension_worker_url", "http://127.0.0.1:5231")
+
+    def set_extension_worker_url(self, url: str):
+        """Set extension captcha worker URL"""
+        if "captcha" not in self._config:
+            self._config["captcha"] = {}
+        self._config["captcha"]["extension_worker_url"] = (url or "http://127.0.0.1:5231").strip()
+
+    @property
+    def extension_worker_timeout(self) -> int:
+        """Get extension captcha worker timeout (seconds)"""
+        timeout = self._config.get("captcha", {}).get("extension_worker_timeout", 15)
+        try:
+            return max(5, int(timeout))
+        except Exception:
+            return 15
+
+    def set_extension_worker_timeout(self, timeout: int):
+        """Set extension captcha worker timeout (seconds)"""
+        if "captcha" not in self._config:
+            self._config["captcha"] = {}
+        try:
+            normalized = max(5, int(timeout))
+        except Exception:
+            normalized = 15
+        self._config["captcha"]["extension_worker_timeout"] = normalized
+
 
 # Global config instance
 config = Config()
