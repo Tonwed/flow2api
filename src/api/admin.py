@@ -1537,8 +1537,9 @@ async def update_captcha_config(
     personal_project_pool_size = request.get("personal_project_pool_size")
     personal_max_resident_tabs = request.get("personal_max_resident_tabs")
     personal_idle_tab_ttl_seconds = request.get("personal_idle_tab_ttl_seconds")
+    captcha_max_retries = request.get("captcha_max_retries")
 
-    # 验证浏览器代理URL格式
+    # 验证URL格式验证浏览器代理URL格式
     if browser_proxy_enabled and browser_proxy_url:
         is_valid, error_msg = validate_browser_proxy_url(browser_proxy_url)
         if not is_valid:
@@ -1584,13 +1585,14 @@ async def update_captcha_config(
         extension_worker_timeout=extension_worker_timeout,
         browser_proxy_enabled=browser_proxy_enabled,
         browser_proxy_url=browser_proxy_url if browser_proxy_enabled else None,
-        browser_count=max(1, int(browser_count)) if browser_count else 1,
+        browser_count=browser_count,
         personal_project_pool_size=personal_project_pool_size,
         personal_max_resident_tabs=personal_max_resident_tabs,
-        personal_idle_tab_ttl_seconds=personal_idle_tab_ttl_seconds
+        personal_idle_tab_ttl_seconds=personal_idle_tab_ttl_seconds,
+        captcha_max_retries=captcha_max_retries
     )
 
-    # 🔥 Hot reload: sync database config to memory
+    # 触发 Hot reload: sync database config to memory
     await db.reload_config_to_memory()
 
     # 如果使用 browser 打码，热重载浏览器数量配置
@@ -1638,7 +1640,8 @@ async def get_captcha_config(token: str = Depends(verify_admin_token)):
         "browser_count": captcha_config.browser_count,
         "personal_project_pool_size": captcha_config.personal_project_pool_size,
         "personal_max_resident_tabs": captcha_config.personal_max_resident_tabs,
-        "personal_idle_tab_ttl_seconds": captcha_config.personal_idle_tab_ttl_seconds
+        "personal_idle_tab_ttl_seconds": captcha_config.personal_idle_tab_ttl_seconds,
+        "captcha_max_retries": captcha_config.captcha_max_retries
     }
 
 

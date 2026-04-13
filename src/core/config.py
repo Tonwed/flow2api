@@ -435,6 +435,21 @@ class Config:
         self._config["captcha"]["personal_idle_tab_ttl_seconds"] = max(60, int(value))
 
     @property
+    def captcha_max_retries(self) -> int:
+        """打码最大重试次数"""
+        value = self._config.get("captcha", {}).get("captcha_max_retries", 3)
+        try:
+            return int(value)
+        except Exception:
+            return 3
+
+    def set_captcha_max_retries(self, value: int):
+        """设置打码最大重试次数"""
+        if "captcha" not in self._config:
+            self._config["captcha"] = {}
+        self._config["captcha"]["captcha_max_retries"] = int(value)
+
+    @property
     def yescaptcha_api_key(self) -> str:
         """Get YesCaptcha API key"""
         return self._config.get("captcha", {}).get("yescaptcha_api_key", "")

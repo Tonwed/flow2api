@@ -447,6 +447,7 @@ class Database:
                     ("remote_browser_base_url", "TEXT DEFAULT ''"),
                     ("remote_browser_api_key", "TEXT DEFAULT ''"),
                     ("remote_browser_timeout", "INTEGER DEFAULT 60"),
+                    ("captcha_max_retries", "INTEGER DEFAULT 3"),
                 ]
 
                 for col_name, col_type in captcha_columns_to_add:
@@ -497,6 +498,7 @@ class Database:
                     ("personal_idle_tab_ttl_seconds", "INTEGER DEFAULT 600"),
                     ("extension_worker_url", "TEXT DEFAULT 'http://127.0.0.1:5231'"),
                     ("extension_worker_timeout", "INTEGER DEFAULT 15"),
+                    ("captcha_max_retries", "INTEGER DEFAULT 3"),
                 ]
 
                 for col_name, col_type in captcha_columns_to_add:
@@ -715,6 +717,7 @@ class Database:
                     personal_project_pool_size INTEGER DEFAULT 4,
                     personal_max_resident_tabs INTEGER DEFAULT 5,
                     personal_idle_tab_ttl_seconds INTEGER DEFAULT 600,
+                    captcha_max_retries INTEGER DEFAULT 3,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -1566,6 +1569,7 @@ class Database:
             config.set_personal_project_pool_size(captcha_config.personal_project_pool_size)
             config.set_personal_max_resident_tabs(captcha_config.personal_max_resident_tabs)
             config.set_personal_idle_tab_ttl_seconds(captcha_config.personal_idle_tab_ttl_seconds)
+            config.set_captcha_max_retries(captcha_config.captcha_max_retries)
 
     # Cache config operations
     async def get_cache_config(self) -> CacheConfig:
@@ -1702,7 +1706,8 @@ class Database:
         browser_count: int = None,
         personal_project_pool_size: int = None,
         personal_max_resident_tabs: int = None,
-        personal_idle_tab_ttl_seconds: int = None
+        personal_idle_tab_ttl_seconds: int = None,
+        captcha_max_retries: int = None
     ):
         """Update captcha configuration"""
         async with self._connect(write=True) as db:
@@ -1737,6 +1742,7 @@ class Database:
                 new_personal_project_pool_size = max(1, min(50, int(new_personal_project_pool_size)))
                 new_personal_max_tabs = max(1, min(50, int(new_personal_max_tabs)))  # 限制1-50
                 new_personal_idle_ttl = max(60, int(new_personal_idle_ttl))  # 最少60秒
+                new_captcha_max_retries = captcha_max_retries if captcha_max_retries is not None else current.get("captcha_max_retries", 3)
 
                 await db.execute("""
                     UPDATE captcha_config
@@ -1749,6 +1755,7 @@ class Database:
                         browser_proxy_enabled = ?, browser_proxy_url = ?, browser_count = ?,
                         personal_project_pool_size = ?,
                         personal_max_resident_tabs = ?, personal_idle_tab_ttl_seconds = ?,
+                        captcha_max_retries = ?,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = 1
                 """, (new_method, new_yes_key, new_yes_url, new_cap_key, new_cap_url,
@@ -1756,7 +1763,7 @@ class Database:
                       (new_remote_base_url or "").strip(), (new_remote_api_key or "").strip(), new_remote_timeout,
                       (new_ext_url or "http://127.0.0.1:5231").strip(), new_ext_timeout,
                       new_proxy_enabled, new_proxy_url, new_browser_count, new_personal_project_pool_size,
-                      new_personal_max_tabs, new_personal_idle_ttl))
+                      new_personal_max_tabs, new_personal_idle_ttl, new_captcha_max_retries))
             else:
                 new_method = captcha_method if captcha_method is not None else "yescaptcha"
                 new_yes_key = yescaptcha_api_key if yescaptcha_api_key is not None else ""
@@ -1783,6 +1790,7 @@ class Database:
                 new_personal_project_pool_size = max(1, min(50, int(new_personal_project_pool_size)))
                 new_personal_max_tabs = max(1, min(50, int(new_personal_max_tabs)))
                 new_personal_idle_ttl = max(60, int(new_personal_idle_ttl))
+                new_captcha_max_retries = captcha_max_retries if captcha_max_retries is not None else 3
 
                 await db.execute("""
                     INSERT INTO captcha_config (id, captcha_method, yescaptcha_api_key, yescaptcha_base_url,
@@ -1792,14 +1800,14 @@ class Database:
                         extension_worker_url, extension_worker_timeout,
                         browser_proxy_enabled, browser_proxy_url, browser_count,
                         personal_project_pool_size,
-                        personal_max_resident_tabs, personal_idle_tab_ttl_seconds)
-                    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        personal_max_resident_tabs, personal_idle_tab_ttl_seconds, captcha_max_retries)
+                    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (new_method, new_yes_key, new_yes_url, new_cap_key, new_cap_url,
                       new_ez_key, new_ez_url, new_cs_key, new_cs_url,
                       (new_remote_base_url or "").strip(), (new_remote_api_key or "").strip(), new_remote_timeout,
-                      (new_ext_url or "http://127.0.0.1:5231").strip(), new_ext_timeout,
+                      new_ext_url, new_ext_timeout,
                       new_proxy_enabled, new_proxy_url, new_browser_count, new_personal_project_pool_size,
-                      new_personal_max_tabs, new_personal_idle_ttl))
+                      new_personal_max_tabs, new_personal_idle_ttl, new_captcha_max_retries))
 
             await db.commit()
 

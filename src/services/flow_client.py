@@ -1106,8 +1106,8 @@ class FlowClient:
         """
         url = f"{self.api_base_url}/flow/upsampleImage"
 
-        # 403/reCAPTCHA/500 重试逻辑 - 最多重试3次
-        max_retries = 3
+        # 403/reCAPTCHA/500 等重试逻辑
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
 
         for retry_attempt in range(max_retries):
@@ -1227,7 +1227,7 @@ class FlowClient:
         url = f"{self.api_base_url}/video:batchAsyncGenerateVideoText"
 
         # 403/reCAPTCHA 重试逻辑 - 最多重试3次
-        max_retries = 3
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
         
         for retry_attempt in range(max_retries):
@@ -1351,7 +1351,7 @@ class FlowClient:
         url = f"{self.api_base_url}/video:batchAsyncGenerateVideoReferenceImages"
 
         # 403/reCAPTCHA 重试逻辑 - 最多重试3次
-        max_retries = 3
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
         
         for retry_attempt in range(max_retries):
@@ -1484,7 +1484,7 @@ class FlowClient:
         url = f"{self.api_base_url}/video:batchAsyncGenerateVideoStartAndEndImage"
 
         # 403/reCAPTCHA 重试逻辑 - 最多重试3次
-        max_retries = 3
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
         
         for retry_attempt in range(max_retries):
@@ -1615,7 +1615,7 @@ class FlowClient:
         url = f"{self.api_base_url}/video:batchAsyncGenerateVideoStartImage"
 
         # 403/reCAPTCHA 重试逻辑 - 最多重试3次
-        max_retries = 3
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
         
         for retry_attempt in range(max_retries):
@@ -1743,7 +1743,7 @@ class FlowClient:
         url = f"{self.api_base_url}/video:batchAsyncGenerateVideoUpsampleVideo"
 
         # 403/reCAPTCHA 重试逻辑 - 最多重试3次
-        max_retries = 3
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
         
         for retry_attempt in range(max_retries):

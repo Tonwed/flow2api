@@ -1431,7 +1431,7 @@ class TokenBrowser:
         """Get a token from the shared browser unless a fatal browser error occurs."""
         async with self._semaphore:
             self._solve_inflight += 1
-            max_retries = 3
+            max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
 
             try:
                 for attempt in range(max_retries):
@@ -1491,7 +1491,7 @@ class TokenBrowser:
         """Get a custom reCAPTCHA token using a temporary browser."""
         async with self._semaphore:
             self._solve_inflight += 1
-            max_retries = 3
+            max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
 
             try:
                 for attempt in range(max_retries):
@@ -1553,7 +1553,7 @@ class TokenBrowser:
         """Get a custom token and verify its score using a temporary browser."""
         async with self._semaphore:
             self._solve_inflight += 1
-            max_retries = 3
+            max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
 
             try:
                 for attempt in range(max_retries):

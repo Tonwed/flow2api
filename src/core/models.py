@@ -198,6 +198,7 @@ class CaptchaConfig(BaseModel):
     personal_project_pool_size: int = 4  # 单个 Token 默认维护的项目池数量（仅影响项目轮换）
     personal_max_resident_tabs: int = 5  # 内置浏览器共享打码标签页数量上限
     personal_idle_tab_ttl_seconds: int = 600  # 内置浏览器标签页空闲超时(秒)
+    captcha_max_retries: int = 3  # 打码最大重试次数 (<= 0 表示无限)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
