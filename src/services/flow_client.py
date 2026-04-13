@@ -947,7 +947,7 @@ class FlowClient:
         url = f"{self.api_base_url}/projects/{project_id}/flowMedia:batchGenerateImages"
 
         # 403/reCAPTCHA 重试逻辑
-        max_retries = config.flow_max_retries
+        max_retries = config.captcha_max_retries if getattr(config, "captcha_max_retries", 3) > 0 else 999999
         last_error = None
         perf_trace: Dict[str, Any] = {
             "max_retries": max_retries,
