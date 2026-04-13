@@ -658,7 +658,7 @@ class FlowClient:
             except Exception as e:
                 last_error = e
                 retry_reason = "网络超时" if self._is_timeout_error(e) else self._get_retry_reason(str(e))
-                if retry_reason and retry_attempt < max_retries - 1:
+                if retry_reason and retry_attempt < max_retries - 1 or max_retries == -1:
                     debug_logger.log_warning(
                         f"[PROJECT] 创建项目失败，准备重试 ({retry_attempt + 2}/{max_retries}) "
                         f"title={title!r}, reason={retry_reason}: {e}"
@@ -865,7 +865,7 @@ class FlowClient:
 
                 # 旧接口不携带 projectId，带项目上下文的上传一旦回退就可能把图片挂到错误项目。
                 if normalized_project_id:
-                    if retry_reason and retry_attempt < max_retries - 1:
+                    if retry_reason and retry_attempt < max_retries - 1 or max_retries == -1:
                         debug_logger.log_warning(
                             f"[UPLOAD] Project-scoped upload 遇到{retry_reason}，准备重试新版接口 "
                             f"({retry_attempt + 2}/{max_retries}, project_id={normalized_project_id})..."
@@ -902,7 +902,7 @@ class FlowClient:
             except Exception as legacy_upload_error:
                 last_error = legacy_upload_error
                 retry_reason = self._get_retry_reason(str(legacy_upload_error))
-                if retry_reason and retry_attempt < max_retries - 1:
+                if retry_reason and retry_attempt < max_retries - 1 or max_retries == -1:
                     debug_logger.log_warning(
                         f"[UPLOAD] 上传遇到{retry_reason}，准备重试 ({retry_attempt + 2}/{max_retries})..."
                     )
@@ -1870,7 +1870,7 @@ class FlowClient:
             except Exception as e:
                 last_error = e
                 retry_reason = self._get_retry_reason(str(e))
-                if retry_reason and retry_attempt < max_retries - 1:
+                if retry_reason and retry_attempt < max_retries - 1 or max_retries == -1:
                     debug_logger.log_warning(
                         f"[VIDEO POLL] 状态查询遇到{retry_reason}，准备重试 ({retry_attempt + 2}/{max_retries})..."
                     )
@@ -1930,7 +1930,7 @@ class FlowClient:
         if not retry_reason:
             return False
 
-        is_terminal_attempt = retry_attempt >= max_retries - 1
+        is_terminal_attempt = max_retries != -1 and retry_attempt >= max_retries - 1
 
         if is_terminal_attempt:
             debug_logger.log_warning(

@@ -1473,7 +1473,7 @@ class TokenBrowser:
                         ]):
                             await self.recycle_browser(reason="browser_runtime_error", rotate_profile=False)
 
-                    if attempt < max_retries - 1:
+                    if attempt < max_retries - 1 or max_retries == -1:
                         await asyncio.sleep(1)
 
                 return None, None
@@ -1534,7 +1534,7 @@ class TokenBrowser:
                             clear_slot_pid=False,
                         )
 
-                    if attempt < max_retries - 1:
+                    if attempt < max_retries - 1 or max_retries == -1:
                         await asyncio.sleep(1)
 
                 return None
@@ -1598,7 +1598,7 @@ class TokenBrowser:
                             clear_slot_pid=False,
                         )
 
-                    if attempt < max_retries - 1:
+                    if attempt < max_retries - 1 or max_retries == -1:
                         await asyncio.sleep(1)
 
                 return {

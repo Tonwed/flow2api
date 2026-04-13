@@ -3227,7 +3227,7 @@ class BrowserCaptchaService:
                     stale_tab = stale_info.get("tab") if isinstance(stale_info, dict) else None
                     if stale_tab:
                         await self._close_tab_quietly(stale_tab)
-                    if attempt >= max_retries - 1:
+                    if attempt >= max_retries - 1 and max_retries != -1:
                         debug_logger.log_error(f"[BrowserCaptcha] [Custom] 获取token异常: {str(e)}")
                         return None
 

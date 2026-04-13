@@ -1415,7 +1415,7 @@ class GenerationHandler:
                         
                         # 检查是否是可重试错误（403、reCAPTCHA、超时等）
                         retry_reason = self.flow_client._get_retry_reason(error_str)
-                        if retry_reason and retry_attempt < max_retries - 1:
+                        if retry_reason and retry_attempt < max_retries - 1 or max_retries == -1:
                             if stream:
                                 yield self._create_stream_chunk(f"⚠️ 放大遇到{retry_reason}，正在重试 ({retry_attempt + 2}/{max_retries})...\n")
                             # 等待一小段时间后重试
