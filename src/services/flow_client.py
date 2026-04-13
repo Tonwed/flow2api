@@ -440,9 +440,7 @@ class FlowClient:
         """识别可重试的 TLS/连接类网络错误。"""
         error_lower = (error_str or "").lower()
         return any(keyword in error_lower for keyword in [
-            "curl: (35)",
-            "curl: (52)",
-            "curl: (56)",
+            "curl:",
             "ssl_error_syscall",
             "tls connect error",
             "ssl connect error",
