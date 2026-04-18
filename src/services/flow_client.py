@@ -870,11 +870,14 @@ class FlowClient:
                         )
                         await asyncio.sleep(1)
                         continue
-                    raise RuntimeError(
-                        "Project-scoped image upload failed via /flow/uploadImage; "
-                        "legacy :uploadUserImage fallback is disabled because it may attach media "
-                        f"to a different project (project_id={normalized_project_id})."
-                    ) from new_upload_error
+                    
+                    debug_logger.log_warning(
+                        "[UPLOAD] Project-scoped image upload failed via /flow/uploadImage. "
+                        f"Original error was: {str(new_upload_error)}. "
+                        "Forcing fallback to legacy :uploadUserImage despite project_id mismatch."
+                    )
+                    # Proceed to legacy fallback instead of crashing
+
 
                 debug_logger.log_warning(
                     f"[UPLOAD] New upload API failed, fallback to legacy endpoint: {new_upload_error}"
@@ -2390,8 +2393,11 @@ class FlowClient:
                     raise RuntimeError(f"remote_browser 返回缺少 token/session_id: {payload}")
                 return token, str(session_id)
             except Exception as e:
-                debug_logger.log_error(f"[reCAPTCHA RemoteBrowser] 错误: {str(e)}")
+                error_msg = str(e)
+                debug_logger.log_error(f"[reCAPTCHA RemoteBrowser] 错误: {error_msg}")
                 self._set_request_fingerprint(None)
+                if "API Key" in error_msg or "Unauthorized" in error_msg or "401" in error_msg:
+                    raise ValueError(f"打码服务鉴权被拒绝 (致命错误, 停止重试): {error_msg}")
                 return None, None
         # 浏览器插件打码（内置 WebSocket 桥接）
         elif captcha_method == "extension":
